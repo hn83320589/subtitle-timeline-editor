@@ -35,7 +35,7 @@ export default function App() {
     const text = await file.text()
     useEditorStore.getState().importSrt(text, file.name)
     const { cues, parseErrors } = useEditorStore.getState()
-    if (text.includes('�')) {
+    if (text.includes('\uFFFD')) {
       setNotice({ kind: 'error', text: `${file.name} 可能不是 UTF-8 編碼（例如 Big5），文字可能出現亂碼。` })
     } else {
       setNotice({

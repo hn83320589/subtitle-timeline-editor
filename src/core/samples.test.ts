@@ -11,7 +11,7 @@ describe('範例檔', () => {
     const { cues, errors } = parseSrt(read('basic-bom-crlf.srt'))
     expect(errors).toEqual([])
     expect(cues[0].text).toBe('大家好，歡迎收看本週的節目')
-    expect(cues.every((cue) => !/[﻿\r]/.test(cue.text))).toBe(true)
+    expect(cues.every((cue) => !/[\uFEFF\r]/.test(cue.text))).toBe(true)
   })
 
   it('with-errors.srt：列出 3 個錯誤的行號，其餘 5 條全數匯入', () => {

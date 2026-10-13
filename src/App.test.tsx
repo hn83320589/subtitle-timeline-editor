@@ -20,9 +20,20 @@ describe('App', () => {
     const user = userEvent.setup()
     render(<App />)
     const input = document.querySelector<HTMLInputElement>('input[accept=".srt"]')!
-    await user.upload(input, srtFile('﻿1\r\n00:00:01,000 --> 00:00:02,000\r\n歡迎收看\r\n'))
+    await user.upload(input, srtFile('\uFEFF1\r\n00:00:01,000 --> 00:00:02,000\r\n歡迎收看\r\n'))
     await waitFor(() => expect(screen.getByLabelText('第 1 條文字')).toHaveValue('歡迎收看'))
     expect(screen.getByText('demo.srt · 1 條')).toBeInTheDocument()
+  })
+
+  it('匯入 Big5 編碼的檔案時提示可能不是 UTF-8', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    // 「你好」的 Big5 編碼（A7 41 A6 6E）不是合法的 UTF-8
+    const ascii = (text: string) => Array.from(text, (c) => c.charCodeAt(0))
+    const bytes = new Uint8Array([...ascii('1\n00:00:01,000 --> 00:00:02,000\n'), 0xa7, 0x41, 0xa6, 0x6e, ...ascii('\n')])
+    const input = document.querySelector<HTMLInputElement>('input[accept=".srt"]')!
+    await user.upload(input, new File([bytes], 'big5.srt'))
+    expect(await screen.findByText('big5.srt 可能不是 UTF-8 編碼（例如 Big5），文字可能出現亂碼。')).toBeInTheDocument()
   })
 
   it('拖放匯入時列出錯誤區塊的行號與原因', async () => {

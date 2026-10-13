@@ -118,7 +118,7 @@ src/components 只負責畫面；動作一律呼叫 store
 npm test
 ```
 
-共 76 個測試（Vitest + Testing Library + jsdom）：
+共 78 個測試（Vitest + Testing Library + jsdom）：
 
 | 檔案 | 涵蓋內容 |
 | --- | --- |
@@ -128,10 +128,10 @@ npm test
 | `core/validate.test.ts` | 時間錯誤與重疊判斷 |
 | `core/samples.test.ts` | 三份範例檔符合驗收條件 |
 | `state/editorStore.test.ts` | 60 次編輯後復原 50 步再重做、歷史上限、選取範圍 |
-| `state/persistence.test.ts` | 自動儲存與還原、資料毀損處理 |
+| `state/persistence.test.ts` | 自動儲存與還原、資料毀損處理、儲存空間已滿 |
 | `components/SubtitleList.test.tsx` | 2,000 條虛擬化、render 計數 |
 | `components/SubtitleRow.test.tsx` | Enter／Shift+Enter／Esc、注音選字的 Enter、點擊跳轉影片、合併 |
-| `App.test.tsx` | 選檔與拖放匯入、匯出按鈕狀態、位移拒絕提示、快捷鍵、匯出再匯入 |
+| `App.test.tsx` | 選檔與拖放匯入、非 UTF-8 提示、匯出按鈕狀態、位移拒絕提示、分割、快捷鍵、匯出再匯入 |
 
 本專案沒有 Playwright E2E 測試（需求列為可選）。以下項目在瀏覽器實機驗證（2026-10-13，macOS）：
 
@@ -142,9 +142,11 @@ npm test
 | Enter／Shift+Enter／Esc、⌘Z／⌘⇧Z | ✓ | ✓ |
 | 修正重疊、分割、合併、匯出按鈕停用與恢復 | ✓ | ✓ |
 | 重新整理後還原、2,000 條捲動 | ✓ | ✓ |
+| 暫停時拖動進度條後按播放，高亮列捲到可視範圍 | ✓ | ✓ |
+| 2 小時、2.25 GB 影片：點擊跳轉誤差 0 ms、隨機跳轉 30 次高亮皆正確 | ✓ | — |
 | 注音輸入：選字的 Enter 不跳列、Shift+Enter 換行、Esc 還原 | — | ✓（自動＋手動） |
 
-Chrome 以 Playwright、Safari 以 safaridriver 自動操作。注音輸入無法透過 WebDriver 測試（自動化視窗會阻擋系統鍵盤輸入），改在一般 Safari 分頁中以 System Events 送出實體按鍵碼，讓按鍵經過注音輸入法，並以 AppleScript 讀取頁面狀態驗證；另有手動驗證。Edge 尚未驗證。
+Chrome 以 Playwright、Safari 以 safaridriver 自動操作。注音輸入無法透過 WebDriver 測試（自動化視窗會阻擋系統鍵盤輸入），改在一般 Safari 分頁中以 System Events 送出實體按鍵碼，讓按鍵經過注音輸入法，並以 AppleScript 讀取頁面狀態驗證；另有手動驗證。大型影片只在 Chrome 驗證：Safari 的 WebDriver 無法選取本機檔案，只能把整個檔案讀進記憶體，與實際使用情況不同。Edge 尚未驗證。
 
 ## 範例檔
 
@@ -166,7 +168,7 @@ Chrome 以 Playwright、Safari 以 safaridriver 自動操作。注音輸入無�
 - **時間欄格式錯誤時**會保留輸入內容並標示紅框，不會寫入；按 `Esc` 還原。若此時把該列捲出畫面並改編輯其他列，這份錯誤輸入會被捨棄。
 - 時間比對以毫秒為單位；畫面高亮的更新頻率受限於瀏覽器的 `requestAnimationFrame`（通常 60 Hz 以上）。
 - 不處理 VTT、ASS，也不渲染 `<i>`、`<b>` 等標籤，標籤會原樣保留。
-- localStorage 通常有 5 MB 上限，對一般字幕檔（2,000 條約 200 KB）綽綽有餘；超過上限時會在 console 記錄錯誤，但編輯仍可繼續。
+- localStorage 通常有 5 MB 上限，對一般字幕檔（2,000 條約 200 KB）綽綽有餘；超過上限時只會在 console 記錄錯誤，**畫面上不會提示**，編輯仍可繼續，但重新整理後會遺失未儲存的內容。
 
 ## 技術
 

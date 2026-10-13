@@ -64,7 +64,7 @@ function parseTiming(line: string): { start: number; end: number } | null {
 }
 
 export function parseSrt(input: string): ParseResult {
-  const normalized = input.replace(/^﻿/, '').replace(/\r\n?/g, '\n')
+  const normalized = input.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n')
   const cues: Cue[] = []
   const errors: ParseError[] = []
 

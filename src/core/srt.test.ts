@@ -6,12 +6,12 @@ const strip = (cues: Cue[]) => cues.map(({ start, end, text }) => ({ start, end,
 
 describe('parseSrt', () => {
   it('處理 UTF-8 BOM 與 CRLF，第一條沒有隱藏字元', () => {
-    const input = '﻿1\r\n00:00:01,000 --> 00:00:02,500\r\n大家好\r\n\r\n2\r\n00:00:03,000 --> 00:00:04,000\r\n第二行\r\n'
+    const input = '\uFEFF1\r\n00:00:01,000 --> 00:00:02,500\r\n大家好\r\n\r\n2\r\n00:00:03,000 --> 00:00:04,000\r\n第二行\r\n'
     const { cues, errors } = parseSrt(input)
     expect(errors).toEqual([])
     expect(cues).toHaveLength(2)
     expect(cues[0]).toMatchObject({ start: 1000, end: 2500, text: '大家好' })
-    expect(cues[0].text).not.toMatch(/[﻿\r]/)
+    expect(cues[0].text).not.toMatch(/[\uFEFF\r]/)
   })
 
   it('處理 LF 與多行字幕文字，並保留 <i> 標籤', () => {
@@ -88,7 +88,7 @@ describe('serializeSrt', () => {
   })
 
   it('匯入 → 匯出 → 再匯入後內容相同', () => {
-    const original = '﻿7\r\n00:00:01,000 --> 00:00:02,500\r\n你好，<b>世界</b>\r\n第二行  \r\n\r\n99\r\n01:00:00,001 --> 01:00:03,000\r\n♪ 音樂 ♪\r\n'
+    const original = '\uFEFF7\r\n00:00:01,000 --> 00:00:02,500\r\n你好，<b>世界</b>\r\n第二行  \r\n\r\n99\r\n01:00:00,001 --> 01:00:03,000\r\n♪ 音樂 ♪\r\n'
     const first = parseSrt(original).cues
     const exported = serializeSrt(first)
     const second = parseSrt(exported)

@@ -16,7 +16,7 @@ const basic = [
   [14200, 17500, '還有珍珠奶茶、蚵仔煎'],
   [17600, 20000, '我們下集再見！'],
 ].map(([s, e, t], i) => block(i + 1, s, e, t))
-writeFileSync('samples/basic-bom-crlf.srt', '﻿' + basic.join('\r\n\r\n').replaceAll('\n', '\r\n') + '\r\n')
+writeFileSync('samples/basic-bom-crlf.srt', '\uFEFF' + basic.join('\r\n\r\n').replaceAll('\n', '\r\n') + '\r\n')
 
 // 2. 含 3 個錯誤區塊（序號非數字、箭頭錯誤、缺少時間軸），其餘 5 條應正常匯入
 const withErrors = [
