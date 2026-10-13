@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fixOverlaps, mergeCues, normalizeText, shiftCues, splitCue } from './ops'
+import { findCueAt, fixOverlaps, mergeCues, normalizeText, shiftCues, splitCue } from './ops'
 import type { Cue } from './types'
 import { findOverlaps } from './validate'
 
@@ -117,5 +117,14 @@ describe('mergeCues', () => {
 describe('normalizeText', () => {
   it('移除空白行與首尾換行，避免破壞 SRT 區塊分隔', () => {
     expect(normalizeText('\n第一行\r\n\n  \n第二行\n')).toBe('第一行\n第二行')
+  })
+})
+
+describe('findCueAt', () => {
+  it('回傳時間點所在的字幕，結束時間那一刻不算在內', () => {
+    const cues = [cue('a', 0, 1000), cue('b', 1000, 2000)]
+    expect(findCueAt(cues, 999)).toBe(0)
+    expect(findCueAt(cues, 1000)).toBe(1)
+    expect(findCueAt(cues, 2000)).toBe(-1)
   })
 })

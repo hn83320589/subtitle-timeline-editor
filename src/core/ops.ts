@@ -63,3 +63,8 @@ export function mergeCues(cues: readonly Cue[], index: number): Cue[] | null {
   }
   return [...cues.slice(0, index), merged, ...cues.slice(index + 2)]
 }
+
+/** 回傳時間點所在的第一條字幕索引（start <= ms < end），找不到回傳 -1。 */
+export function findCueAt(cues: readonly Cue[], ms: number): number {
+  return cues.findIndex((cue) => cue.start <= ms && ms < cue.end)
+}
