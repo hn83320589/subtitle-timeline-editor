@@ -16,19 +16,39 @@ interface Block {
   lines: string[]
 }
 
+/**
+ * 以空白行切出區塊。若區塊的文字部分又出現時間軸，表示前一條漏了空白行：
+ * 時間軸前一行是序號就連同序號拆成新區塊，否則從時間軸本身開始新區塊（之後回報缺少序號）。
+ */
 function splitBlocks(lines: string[]): Block[] {
   const blocks: Block[] = []
   let current: Block | null = null
+  const startBlock = (firstLine: number, blockLines: string[]) => {
+    current = { firstLine, lines: blockLines }
+    blocks.push(current)
+  }
+
   lines.forEach((line, i) => {
     if (line.trim() === '') {
       current = null
       return
     }
     if (!current) {
-      current = { firstLine: i + 1, lines: [] }
-      blocks.push(current)
+      startBlock(i + 1, [line])
+      return
     }
-    current.lines.push(line)
+    const block: Block = current
+    if (block.lines.length >= 2 && parseTiming(line) !== null) {
+      const previous = block.lines.at(-1) ?? ''
+      if (block.lines.length >= 3 && INDEX_PATTERN.test(previous.trim())) {
+        block.lines.pop()
+        startBlock(i, [previous, line])
+      } else {
+        startBlock(i + 1, [line])
+      }
+      return
+    }
+    block.lines.push(line)
   })
   return blocks
 }
@@ -50,6 +70,10 @@ export function parseSrt(input: string): ParseResult {
 
   for (const { firstLine, lines } of splitBlocks(normalized.split('\n'))) {
     const [indexLine, timingLine, ...textLines] = lines
+    if (parseTiming(indexLine) !== null) {
+      errors.push({ line: firstLine, reason: '缺少序號：時間軸前一行應為序號（可能是上一條字幕後漏了空白行）' })
+      continue
+    }
     if (!INDEX_PATTERN.test(indexLine.trim())) {
       errors.push({ line: firstLine, reason: `序號必須是正整數，實際為「${indexLine.trim()}」` })
       continue

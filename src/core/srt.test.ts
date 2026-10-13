@@ -45,6 +45,25 @@ describe('parseSrt', () => {
     expect(errors[2].reason).toContain('時間')
   })
 
+  it('字幕間漏掉空白行時，從「序號＋時間軸」處拆成兩條', () => {
+    const input = '1\n00:00:01,000 --> 00:00:02,000\n第一條\n2\n00:00:03,000 --> 00:00:04,000\n第二條\n'
+    const { cues, errors } = parseSrt(input)
+    expect(errors).toEqual([])
+    expect(strip(cues)).toEqual([
+      { start: 1000, end: 2000, text: '第一條' },
+      { start: 3000, end: 4000, text: '第二條' },
+    ])
+  })
+
+  it('文字中出現沒有序號的時間軸時，回報該行缺少序號，前一條照常匯入', () => {
+    const input = '1\n00:00:01,000 --> 00:00:02,000\n第一條\n00:00:03,000 --> 00:00:04,000\n沒有序號\n'
+    const { cues, errors } = parseSrt(input)
+    expect(strip(cues)).toEqual([{ start: 1000, end: 2000, text: '第一條' }])
+    expect(errors).toHaveLength(1)
+    expect(errors[0].line).toBe(4)
+    expect(errors[0].reason).toContain('序號')
+  })
+
   it('結束時間不晚於開始時間的區塊仍匯入，交由編輯器顯示錯誤', () => {
     const { cues, errors } = parseSrt('1\n00:00:05,000 --> 00:00:04,000\nX\n')
     expect(errors).toEqual([])
