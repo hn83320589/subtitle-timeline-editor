@@ -108,7 +108,7 @@ src/components 只負責畫面；動作一律呼叫 store
 
 使用 `@tanstack/react-virtual`，支援動態列高（多行字幕的列比較高），並提供 `scrollToIndex` 用於自動捲動與 Enter 換列。
 
-- 2,000 條字幕時 DOM 只有約 18 列。在 Chrome 實測連續捲動 240 個 frame，frame 間隔中位數 8.3 ms、最大 9.3 ms（120 Hz 螢幕），沒有掉幀。
+- 2,000 條字幕時 DOM 只有約 14–18 列。實測連續捲動 240 個 frame 都沒有掉幀：Chrome 的 frame 間隔中位數 8.3 ms、最大 9.3 ms（120 Hz 螢幕）；Safari 27 的中位數 17 ms、最大 19 ms（Safari 的動畫更新頻率上限為 60 Hz）。
 - 自訂 `rangeExtractor`，讓**正在編輯的列即使捲出畫面也保持掛載**，未確認的內容不會因為虛擬化被 unmount 而遺失。
 - 播放時一律自動捲到高亮列；正在編輯的列因為保持掛載，被捲出畫面也不會遺失內容。
 
@@ -133,7 +133,18 @@ npm test
 | `components/SubtitleRow.test.tsx` | Enter／Shift+Enter／Esc、注音選字的 Enter、點擊跳轉影片、合併 |
 | `App.test.tsx` | 選檔與拖放匯入、匯出按鈕狀態、位移拒絕提示、快捷鍵、匯出再匯入 |
 
-本專案沒有 Playwright E2E 測試（需求列為可選）。影片同步、捲動效能與自動捲動是手動在 Chrome 中驗證的，結果記錄在上方。
+本專案沒有 Playwright E2E 測試（需求列為可選）。以下項目在瀏覽器實機驗證（2026-10-13，macOS）：
+
+| 項目 | Chrome | Safari 27 |
+| --- | --- | --- |
+| 匯入 BOM + CRLF、錯誤區塊行號 | ✓ | ✓ |
+| 點擊列跳轉（誤差 0 ms）、播放時高亮同步、自動捲動 | ✓ | ✓ |
+| Enter／Shift+Enter／Esc、⌘Z／⌘⇧Z | ✓ | ✓ |
+| 修正重疊、分割、合併、匯出按鈕停用與恢復 | ✓ | ✓ |
+| 重新整理後還原、2,000 條捲動 | ✓ | ✓ |
+| 注音輸入：選字的 Enter 不跳列、Shift+Enter 換行、Esc 還原 | — | ✓（手動） |
+
+Chrome 以 Playwright、Safari 以 safaridriver 自動操作；注音輸入因 Safari 的自動化視窗會阻擋系統鍵盤輸入，改為手動驗證。Edge 尚未驗證。
 
 ## 範例檔
 
