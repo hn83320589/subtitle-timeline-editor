@@ -142,9 +142,9 @@ npm test
 | Enter／Shift+Enter／Esc、⌘Z／⌘⇧Z | ✓ | ✓ |
 | 修正重疊、分割、合併、匯出按鈕停用與恢復 | ✓ | ✓ |
 | 重新整理後還原、2,000 條捲動 | ✓ | ✓ |
-| 注音輸入：選字的 Enter 不跳列、Shift+Enter 換行、Esc 還原 | — | ✓（手動） |
+| 注音輸入：選字的 Enter 不跳列、Shift+Enter 換行、Esc 還原 | — | ✓（自動＋手動） |
 
-Chrome 以 Playwright、Safari 以 safaridriver 自動操作；注音輸入因 Safari 的自動化視窗會阻擋系統鍵盤輸入，改為手動驗證。Edge 尚未驗證。
+Chrome 以 Playwright、Safari 以 safaridriver 自動操作。注音輸入無法透過 WebDriver 測試（自動化視窗會阻擋系統鍵盤輸入），改在一般 Safari 分頁中以 System Events 送出實體按鍵碼，讓按鍵經過注音輸入法，並以 AppleScript 讀取頁面狀態驗證；另有手動驗證。Edge 尚未驗證。
 
 ## 範例檔
 
