@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -57,6 +57,27 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: '套用位移' }))
     expect(screen.getByText('第 1、2 條會變成負時間，整批未套用。')).toBeInTheDocument()
     expect(useEditorStore.getState().cues[2].start).toBe(4000)
+  })
+
+  it('分割依游標位置拆開文字；沒有游標位置時不分割並提示', async () => {
+    const user = userEvent.setup()
+    resetStore('1\n00:00:01,000 --> 00:00:05,000\n前半段後半段\n')
+    render(<App />)
+    act(() => useEditorStore.getState().setCurrentTime(3000))
+
+    await user.click(screen.getByRole('button', { name: '分割' }))
+    expect(screen.getByText('請先在第 1 條的文字中點一下，決定要從哪裡拆開。')).toBeInTheDocument()
+    expect(useEditorStore.getState().cues).toHaveLength(1)
+
+    const text = screen.getByLabelText('第 1 條文字') as HTMLTextAreaElement
+    text.focus()
+    text.setSelectionRange(3, 3)
+    fireEvent.select(text)
+    await user.click(screen.getByRole('button', { name: '分割' }))
+    expect(useEditorStore.getState().cues.map(({ start, end, text }) => [start, end, text])).toEqual([
+      [1000, 3000, '前半段'],
+      [3000, 5000, '後半段'],
+    ])
   })
 
   it('Ctrl/Cmd+Z 復原、Ctrl/Cmd+Shift+Z 重做', async () => {

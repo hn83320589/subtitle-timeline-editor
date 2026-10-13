@@ -60,14 +60,15 @@ export function Toolbar({ onImportFile, notify }: ToolbarProps) {
       return
     }
     const caret = caretTracker.get(cue.id)
-    if (!split(activeIndex, currentTimeMs, caret ?? Math.ceil(cue.text.length / 2))) {
+    if (caret === null) {
+      notify({ kind: 'error', text: `請先在第 ${activeIndex + 1} 條的文字中點一下，決定要從哪裡拆開。` })
+      return
+    }
+    if (!split(activeIndex, currentTimeMs, caret)) {
       notify({ kind: 'error', text: '播放時間剛好在字幕的開始或結束，無法分割。' })
       return
     }
-    notify({
-      kind: 'info',
-      text: caret === null ? `已分割第 ${activeIndex + 1} 條；沒有游標位置，文字從中間拆開。` : `已分割第 ${activeIndex + 1} 條。`,
-    })
+    notify({ kind: 'info', text: `已分割第 ${activeIndex + 1} 條。` })
   }
 
   return (
