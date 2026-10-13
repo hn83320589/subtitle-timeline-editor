@@ -118,12 +118,12 @@ src/components 只負責畫面；動作一律呼叫 store
 npm test
 ```
 
-共 67 個測試（Vitest + Testing Library + jsdom）：
+共 76 個測試（Vitest + Testing Library + jsdom）：
 
 | 檔案 | 涵蓋內容 |
 | --- | --- |
 | `core/time.test.ts` | 時間解析與格式化 |
-| `core/srt.test.ts` | BOM／CRLF、錯誤區塊行號、匯入 → 匯出 → 再匯入 |
+| `core/srt.test.ts` | BOM／CRLF、錯誤區塊行號、漏掉空白行、匯入 → 匯出 → 再匯入 |
 | `core/ops.test.ts` | 修正重疊後無相鄰重疊、批次位移的整批拒絕、分割、合併 |
 | `core/validate.test.ts` | 時間錯誤與重疊判斷 |
 | `core/samples.test.ts` | 三份範例檔符合驗收條件 |
