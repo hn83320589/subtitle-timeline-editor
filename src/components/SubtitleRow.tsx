@@ -41,8 +41,11 @@ export const SubtitleRow = memo(function SubtitleRow({ index }: SubtitleRowProps
   const { updateCue, toggleSelect, merge, requestFocus } = useEditorStore.getState()
 
   const onMouseDown = (e: MouseEvent) => {
+    const target = e.target as HTMLElement
     // 勾選框與按鈕有自己的用途，不跳轉影片
-    if ((e.target as HTMLElement).closest('input[type="checkbox"], button')) return
+    if (target.closest('input[type="checkbox"], button')) return
+    // 影片已在這條字幕內時，點欄位只是要編輯（例如放游標準備分割），不把影片拉回開始時間
+    if (isActive && target.closest('[data-cue-field]')) return
     videoController.seek(cue.start)
   }
 

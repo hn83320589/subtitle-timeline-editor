@@ -100,6 +100,20 @@ describe('字幕列編輯', () => {
     seek.mockRestore()
   })
 
+  it('影片已在該列範圍內時，點文字欄不跳轉，以便先定位影片再放游標分割', () => {
+    const seek = vi.spyOn(videoController, 'seek')
+    act(() => useEditorStore.getState().setCurrentTime(4800)) // 第 3 條：4000–5500
+    render(<SubtitleList />)
+    fireEvent.mouseDown(screen.getByLabelText('第 3 條文字'))
+    fireEvent.mouseDown(screen.getByLabelText('第 3 條開始時間'))
+    expect(seek).not.toHaveBeenCalled()
+
+    // 點序號等非欄位區域仍然跳到開始時間
+    fireEvent.mouseDown(screen.getByText('3', { selector: '.seq' }))
+    expect(seek).toHaveBeenCalledWith(4000)
+    seek.mockRestore()
+  })
+
   it('合併按鈕把這一列與下一列合併', async () => {
     const user = userEvent.setup()
     render(<SubtitleList />)
