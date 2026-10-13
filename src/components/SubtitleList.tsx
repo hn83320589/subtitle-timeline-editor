@@ -12,10 +12,6 @@ function indexOf(target: EventTarget | null): number | null {
   return item ? Number(item.dataset.index) : null
 }
 
-function isCueFieldFocused(): boolean {
-  return document.activeElement instanceof HTMLElement && document.activeElement.dataset.cueField !== undefined
-}
-
 export function SubtitleList() {
   // 只訂閱 id 清單：文字或時間變動不會讓整個列表重新 render
   const ids = useEditorStore(useShallow((s) => s.cues.map((cue) => cue.id)))
@@ -48,13 +44,8 @@ export function SubtitleList() {
       useEditorStore.subscribe((state, prev) => {
         if (state.focusRequest && state.focusRequest !== prev.focusRequest) {
           virtualizer.scrollToIndex(state.focusRequest.index, { align: 'auto' })
-        } else if (
-          state.activeIndex !== prev.activeIndex &&
-          state.activeIndex >= 0 &&
-          videoController.isPlaying() &&
-          // 使用者正在編輯時不搶走畫面
-          !isCueFieldFocused()
-        ) {
+        } else if (state.activeIndex !== prev.activeIndex && state.activeIndex >= 0 && videoController.isPlaying()) {
+          // 編輯中的列由 rangeExtractor 保持掛載，捲走也不會遺失未確認的內容
           virtualizer.scrollToIndex(state.activeIndex, { align: 'auto' })
         }
       }),

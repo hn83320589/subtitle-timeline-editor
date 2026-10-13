@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useEditorStore } from '../state/editorStore'
+import { videoController } from '../lib/videoController'
 import { makeSrt, mockLayout, resetStore } from '../test/helpers'
 import { SubtitleList } from './SubtitleList'
 
@@ -70,5 +71,40 @@ describe('SubtitleList（2,000 條）', () => {
     act(() => useEditorStore.getState().setCurrentTime(4100)) // 第 3 條
     expect([...renderCounts.keys()].sort()).toEqual([1, 2])
     expect(screen.getByLabelText('第 3 條文字').closest('.cue-row')).toHaveClass('is-active')
+  })
+})
+
+describe('播放時自動捲動', () => {
+  it('即使正在編輯某一列，播放中的高亮列仍會被捲到可視範圍', () => {
+    const scrollTo = vi.fn()
+    HTMLElement.prototype.scrollTo = scrollTo
+    // virtual-core 會把目標位置限制在 scrollHeight - clientHeight 內，jsdom 中兩者皆為 0
+    const scroller = (el: HTMLElement) => el.dataset.testid === 'cue-scroller'
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return scroller(this) ? 2000 * 64 : 0
+      },
+    })
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return scroller(this) ? 600 : 0
+      },
+    })
+    const playing = vi.spyOn(videoController, 'isPlaying').mockReturnValue(true)
+    render(<SubtitleList />)
+    screen.getByLabelText('第 1 條文字').focus()
+    scrollTo.mockClear()
+
+    act(() => useEditorStore.getState().setCurrentTime(500 * 2000 + 100)) // 第 501 條
+    expect(scrollTo).toHaveBeenCalled()
+    // 第 501 條約在 500 × 64px 處
+    expect(scrollTo.mock.calls.at(-1)?.[0].top).toBeGreaterThan(30_000)
+    playing.mockRestore()
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollTo
+    for (const key of ['scrollHeight', 'clientHeight']) {
+      Object.defineProperty(HTMLElement.prototype, key, { configurable: true, get: () => 0 })
+    }
   })
 })
