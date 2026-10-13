@@ -1,7 +1,6 @@
 import { act, render, screen } from '@testing-library/react'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useEditorStore } from '../state/editorStore'
-import { videoController } from '../lib/videoController'
 import { makeSrt, mockLayout, resetStore } from '../test/helpers'
 import { SubtitleList } from './SubtitleList'
 
@@ -75,7 +74,7 @@ describe('SubtitleList（2,000 條）', () => {
 })
 
 describe('播放時自動捲動', () => {
-  it('即使正在編輯某一列，播放中的高亮列仍會被捲到可視範圍', () => {
+  it('播放中高亮列會被捲到可視範圍，開始播放時也會捲動（即使正在編輯）', () => {
     const scrollTo = vi.fn()
     HTMLElement.prototype.scrollTo = scrollTo
     // virtual-core 會把目標位置限制在 scrollHeight - clientHeight 內，jsdom 中兩者皆為 0
@@ -92,8 +91,8 @@ describe('播放時自動捲動', () => {
         return scroller(this) ? 600 : 0
       },
     })
-    const playing = vi.spyOn(videoController, 'isPlaying').mockReturnValue(true)
     render(<SubtitleList />)
+    act(() => useEditorStore.getState().setPlaying(true))
     screen.getByLabelText('第 1 條文字').focus()
     scrollTo.mockClear()
 
@@ -101,7 +100,15 @@ describe('播放時自動捲動', () => {
     expect(scrollTo).toHaveBeenCalled()
     // 第 501 條約在 500 × 64px 處
     expect(scrollTo.mock.calls.at(-1)?.[0].top).toBeGreaterThan(30_000)
-    playing.mockRestore()
+
+    // 暫停時拖動進度條到第 1001 條不捲動；按下播放的那一刻才捲過去
+    act(() => useEditorStore.getState().setPlaying(false))
+    scrollTo.mockClear()
+    act(() => useEditorStore.getState().setCurrentTime(1000 * 2000 + 100))
+    expect(scrollTo).not.toHaveBeenCalled()
+    act(() => useEditorStore.getState().setPlaying(true))
+    expect(scrollTo).toHaveBeenCalled()
+    expect(scrollTo.mock.calls.at(-1)?.[0].top).toBeGreaterThan(60_000)
     delete (HTMLElement.prototype as Partial<HTMLElement>).scrollTo
     for (const key of ['scrollHeight', 'clientHeight']) {
       Object.defineProperty(HTMLElement.prototype, key, { configurable: true, get: () => 0 })

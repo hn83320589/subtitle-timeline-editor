@@ -19,6 +19,8 @@ interface EditorState {
   lastSelectedId: string | null
   currentTimeMs: number
   activeIndex: number
+  /** 影片是否播放中（決定是否自動捲動到高亮列） */
+  playing: boolean
   /** 要求某列的文字欄取得焦點（nonce 讓同一列可以重複要求） */
   focusRequest: { index: number; nonce: number } | null
 
@@ -35,6 +37,7 @@ interface EditorState {
   toggleSelect: (id: string, range: boolean) => void
   clearSelection: () => void
   setCurrentTime: (ms: number) => void
+  setPlaying: (playing: boolean) => void
   requestFocus: (index: number) => void
   dismissParseErrors: () => void
 }
@@ -62,6 +65,7 @@ export const useEditorStore = create<EditorState>()((set, get) => {
     lastSelectedId: null,
     currentTimeMs: 0,
     activeIndex: -1,
+    playing: false,
     focusRequest: null,
 
     importSrt: (text, fileName) => {
@@ -161,6 +165,8 @@ export const useEditorStore = create<EditorState>()((set, get) => {
     setCurrentTime: (ms) => {
       set({ currentTimeMs: ms, activeIndex: findCueAt(get().cues, ms) })
     },
+
+    setPlaying: (playing) => set({ playing }),
 
     requestFocus: (index) => set({ focusRequest: { index, nonce: Date.now() } }),
 

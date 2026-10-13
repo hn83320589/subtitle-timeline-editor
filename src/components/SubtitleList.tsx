@@ -1,7 +1,6 @@
 import { defaultRangeExtractor, useVirtualizer, type Range } from '@tanstack/react-virtual'
 import { useCallback, useEffect, useRef, useState, type FocusEvent } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { videoController } from '../lib/videoController'
 import { useEditorStore } from '../state/editorStore'
 import { SubtitleRow } from './SubtitleRow'
 
@@ -44,7 +43,12 @@ export function SubtitleList() {
       useEditorStore.subscribe((state, prev) => {
         if (state.focusRequest && state.focusRequest !== prev.focusRequest) {
           virtualizer.scrollToIndex(state.focusRequest.index, { align: 'auto' })
-        } else if (state.activeIndex !== prev.activeIndex && state.activeIndex >= 0 && videoController.isPlaying()) {
+        } else if (
+          state.playing &&
+          state.activeIndex >= 0 &&
+          // 播放中切換到下一條，或在暫停時拖動進度條後按下播放
+          (state.activeIndex !== prev.activeIndex || !prev.playing)
+        ) {
           // 編輯中的列由 rangeExtractor 保持掛載，捲走也不會遺失未確認的內容
           virtualizer.scrollToIndex(state.activeIndex, { align: 'auto' })
         }

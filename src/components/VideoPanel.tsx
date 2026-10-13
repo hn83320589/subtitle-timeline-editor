@@ -43,10 +43,14 @@ export function VideoPanel({ url, onPickFile }: VideoPanelProps) {
             src={url}
             controls
             onPlay={() => {
+              useEditorStore.getState().setPlaying(true)
               cancelAnimationFrame(frameRef.current)
               tick()
             }}
-            onPause={syncTime}
+            onPause={() => {
+              useEditorStore.getState().setPlaying(false)
+              syncTime()
+            }}
             onSeeked={syncTime}
             onTimeUpdate={syncTime}
             onLoadedMetadata={syncTime}
