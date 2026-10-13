@@ -52,6 +52,18 @@ export function Toolbar({ onImportFile, notify }: ToolbarProps) {
     }
   }
 
+  const onFixOverlaps = () => {
+    const { fixedCount, invalidSeqs } = useEditorStore.getState().fixOverlaps()
+    if (invalidSeqs.length > 0) {
+      notify({
+        kind: 'error',
+        text: `已修正 ${fixedCount} 處重疊；第 ${invalidSeqs.join('、')} 條修正後結束時間不晚於開始時間，請手動調整。`,
+      })
+    } else {
+      notify({ kind: 'info', text: `已修正 ${fixedCount} 處重疊。` })
+    }
+  }
+
   const onSplit = () => {
     const { activeIndex, currentTimeMs, cues, split } = useEditorStore.getState()
     const cue = cues[activeIndex]
@@ -105,7 +117,7 @@ export function Toolbar({ onImportFile, notify }: ToolbarProps) {
         <button type="button" className="button" disabled={count === 0} title="在影片目前時間點分割該條字幕，文字依游標位置拆開" onClick={onSplit}>
           分割
         </button>
-        <button type="button" className="button" disabled={overlapCount === 0} onClick={() => useEditorStore.getState().fixOverlaps()}>
+        <button type="button" className="button" disabled={overlapCount === 0} onClick={onFixOverlaps}>
           修正重疊{overlapCount > 0 && `（${overlapCount}）`}
         </button>
       </div>

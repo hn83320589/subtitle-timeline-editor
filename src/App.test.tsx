@@ -80,6 +80,14 @@ describe('App', () => {
     ])
   })
 
+  it('修正重疊後若有字幕的結束時間不晚於開始時間，提示其序號', async () => {
+    const user = userEvent.setup()
+    resetStore('1\n00:00:02,000 --> 00:00:05,000\nA\n\n2\n00:00:01,000 --> 00:00:06,000\nB\n')
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /修正重疊/ }))
+    expect(screen.getByText('已修正 1 處重疊；第 1 條修正後結束時間不晚於開始時間，請手動調整。')).toBeInTheDocument()
+  })
+
   it('Ctrl/Cmd+Z 復原、Ctrl/Cmd+Shift+Z 重做', async () => {
     const user = userEvent.setup()
     resetStore(makeSrt(2))

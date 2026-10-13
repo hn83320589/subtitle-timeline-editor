@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { findCueAt, fixOverlaps, mergeCues, normalizeText, shiftCues, splitCue, type ShiftResult } from '../core/ops'
 import { parseSrt } from '../core/srt'
 import type { Cue, ParseError } from '../core/types'
+import { hasTimingError } from '../core/validate'
 
 /** 需求為至少 50 步，保留一些餘裕。 */
 export const HISTORY_LIMIT = 100
@@ -24,7 +25,8 @@ interface EditorState {
   importSrt: (text: string, fileName: string) => void
   restore: (cues: Cue[], fileName: string) => void
   updateCue: (id: string, patch: CuePatch) => void
-  fixOverlaps: () => void
+  /** 回傳修正的條數，以及修正後結束時間不晚於開始時間的序號 */
+  fixOverlaps: () => { fixedCount: number; invalidSeqs: number[] }
   shift: (deltaMs: number, scope: 'all' | 'selected') => ShiftResult
   split: (index: number, atMs: number, caret: number) => boolean
   merge: (index: number) => boolean
@@ -89,7 +91,13 @@ export const useEditorStore = create<EditorState>()((set, get) => {
     fixOverlaps: () => {
       const { cues } = get()
       const next = fixOverlaps(cues)
-      if (next.some((cue, i) => cue !== cues[i])) commit(next)
+      const changed = next.flatMap((cue, i) => (cue !== cues[i] ? [i] : []))
+      if (changed.length > 0) commit(next)
+      return {
+        fixedCount: changed.length,
+        // 下一條開始得比這條還早時，依規則修正後會變成時間錯誤，需要使用者手動處理
+        invalidSeqs: changed.filter((i) => hasTimingError(next[i])).map((i) => i + 1),
+      }
     },
 
     shift: (deltaMs, scope) => {

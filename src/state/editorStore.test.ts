@@ -105,6 +105,20 @@ describe('editorStore', () => {
     expect(store().cues[0]).toMatchObject({ start: 1000, end: 2000, text: '一' })
   })
 
+  it('修正重疊回報修正條數，以及因此變成時間錯誤的序號', () => {
+    store().importSrt(
+      [
+        '1', '00:00:01,000 --> 00:00:03,000', 'A', '',
+        '2', '00:00:02,000 --> 00:00:05,000', 'B', '',
+        '3', '00:00:01,500 --> 00:00:06,000', 'C 開始得比 B 還早', '',
+      ].join('\n'),
+      'x.srt',
+    )
+    const result = store().fixOverlaps()
+    expect(result).toEqual({ fixedCount: 2, invalidSeqs: [2] })
+    expect(store().cues.map((c) => c.end)).toEqual([1999, 1499, 6000])
+  })
+
   it('依播放時間計算當前字幕', () => {
     store().setCurrentTime(3500)
     expect(store().activeIndex).toBe(1)
